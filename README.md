@@ -1,17 +1,29 @@
-# Crowsi provider HTTP transport
+# @crowsi/provider-http-transport
 
-Version 0.10.0. This package performs bounded browser HTTP egress for provider
-adapters. It owns transport safety only: exact-origin admission, method admission,
-request and response byte limits, deadlines, cancellation, and response draining.
+Make browser HTTP requests within explicit origin, method, size and time limits.
 
-The provider adapter owns endpoint paths, authorization headers, provider scopes,
-response schemas, pagination, retries and application errors. The product UI does
-not call this package directly. The transport never reads credentials, chooses a
-provider, follows an alternate origin, parses business JSON, or retries effects.
+## What you can do
 
-Every destination origin is supplied explicitly by the provider adapter. HTTPS is
-required; URL credentials and fragments are rejected. Redirects are not followed:
-the provider owner must admit a changed endpoint explicitly before any credential
-can be sent to it.
+- Enforce declared request and response bounds.
+- Propagate cancellation and drain bounded responses.
 
-Run `npm test` to verify origin, size, deadline, cancellation and response bounds.
+## Current scope
+
+The application supplies the approved egress policy. Arbitrary destinations and redirects are not silently accepted.
+
+Package distribution is not activated by this documentation. Use the checked-in source and the declared dependency versions; published availability must be verified separately.
+
+## Getting started
+
+Use the package manager matching the checked-in lockfile and the Node.js version declared in `engines` in `package.json`. Run from this repository:
+
+```sh
+npm install
+npm run test
+```
+
+## Documentation and source
+
+[Usage guide](docs/getting-started.md)
+
+[Implementation and public interfaces](src) · [Verification cases](test) · [Contributing](CONTRIBUTING.md) · [Security reporting](SECURITY.md) · [License](LICENSE) · [Attribution notices](NOTICE)
