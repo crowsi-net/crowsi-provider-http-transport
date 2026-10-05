@@ -16,15 +16,30 @@
   "files": [
     "src",
     "README.md",
-    "repository.toml",
+    "SECURITY.md",
     "LICENSE",
     "NOTICE"
   ],
   "scripts": {
-    "test": "node --test test/*.test.mjs"
+    "test": "node --test test/*.test.mjs",
+    "typecheck": "tsc -p tsconfig.json",
+    "prepack": "npm test && npm run typecheck"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/crowsi-net/crowsi-provider-http-transport.git"
+    "url": "git+https://github.com/crowsi-net/crowsi-provider-http-transport.git"
+  },
+  "packageManager": "npm@11.12.1",
+  "homepage": "https://github.com/crowsi-net/crowsi-provider-http-transport#readme",
+  "bugs": {
+    "url": "https://github.com/crowsi-net/crowsi-provider-http-transport/issues"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org",
+    "access": "public",
+    "provenance": true
+  },
+  "devDependencies": {
+    "typescript": "5.9.3"
   }
 }
