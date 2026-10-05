@@ -15,6 +15,16 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
-          node-version: '24'
-      - name: Test Node contracts
-        run: node --test test/*.test.mjs
+          node-version: '24.15.0'
+      - name: Install the pinned package manager and frozen development dependency
+        run: |
+          npm install --global npm@11.12.1
+          npm ci --ignore-scripts
+      - name: Pack the tested and typed source
+        run: |
+          mkdir -p "$RUNNER_TEMP/http-transport-package"
+          npm pack --json --pack-destination "$RUNNER_TEMP/http-transport-package"
+      - name: Check the actual distribution archive
+        run: python3 .github/scripts/check-package.py "$RUNNER_TEMP/http-transport-package/crowsi-provider-http-transport-0.10.0.tgz"
+      - name: Verify a fresh archive consumer
+        run: node .github/scripts/package-consumer.mjs "$RUNNER_TEMP/http-transport-package/crowsi-provider-http-transport-0.10.0.tgz"
