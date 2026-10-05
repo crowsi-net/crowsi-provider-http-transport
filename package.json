@@ -1,6 +1,6 @@
 {
   "name": "@crowsi/provider-http-transport",
-  "version": "0.10.0",
+  "version": "0.10.1",
   "type": "module",
   "license": "Apache-2.0",
   "description": "Bounded browser HTTP egress transport with explicit destination ownership",
@@ -18,7 +18,8 @@
     "README.md",
     "SECURITY.md",
     "LICENSE",
-    "NOTICE"
+    "NOTICE",
+    "README.ja.md"
   ],
   "scripts": {
     "format": "biome format --write src test scripts .github/scripts/*.mjs",

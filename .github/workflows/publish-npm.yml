@@ -94,12 +94,12 @@ jobs:
           npm whoami --registry=https://registry.npmjs.org > /dev/null
           node --input-type=module -e 'const r=await fetch("https://registry.npmjs.org/"+encodeURIComponent("@crowsi/provider-http-transport"),{headers:{authorization:"Bearer "+process.env.NODE_AUTH_TOKEN},redirect:"error"});if(r.status!==404)throw Error("Bootstrap requires an authenticated missing package; inspect existing visibility/ownership")'
           set -o pipefail
-          npm stage publish "$RUNNER_TEMP/package-release/crowsi-provider-http-transport-0.10.0.tgz" --registry=https://registry.npmjs.org --access public --provenance --ignore-scripts | tee "$RUNNER_TEMP/npm-stage-result.txt"
+          npm stage publish "$RUNNER_TEMP/package-release/crowsi-provider-http-transport-0.10.1.tgz" --registry=https://registry.npmjs.org --access public --provenance --ignore-scripts | tee "$RUNNER_TEMP/npm-stage-result.txt"
       - name: Subsequent staging with repository OIDC identity
         if: inputs.mode == 'oidc'
         run: |
           set -o pipefail
-          npm stage publish "$RUNNER_TEMP/package-release/crowsi-provider-http-transport-0.10.0.tgz" --registry=https://registry.npmjs.org --access public --provenance --ignore-scripts | tee "$RUNNER_TEMP/npm-stage-result.txt"
+          npm stage publish "$RUNNER_TEMP/package-release/crowsi-provider-http-transport-0.10.1.tgz" --registry=https://registry.npmjs.org --access public --provenance --ignore-scripts | tee "$RUNNER_TEMP/npm-stage-result.txt"
       - name: Record pending stage and reviewed distribution for owner approval
         env:
           REVIEWED_ARTIFACT_ID: ${{ needs.prepare.outputs.artifact-id }}

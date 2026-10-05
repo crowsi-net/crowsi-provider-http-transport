@@ -3,7 +3,7 @@ from pathlib import Path
 
 expected_repo = 'crowsi-net/crowsi-provider-http-transport'
 expected_name = '@crowsi/provider-http-transport'
-expected_version = '0.10.0'
+expected_version = '0.10.1'
 mode = os.environ['RELEASE_MODE']
 sha = os.environ['GITHUB_SHA']
 assert mode in ('prepare', 'bootstrap', 'oidc')
