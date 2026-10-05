@@ -1,0 +1,99 @@
+name: Publish reviewed npm archive
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        type: choice
+        options: [prepare, bootstrap, oidc]
+        default: prepare
+        required: true
+permissions:
+  contents: read
+concurrency:
+  group: package-publication-${{ github.repository }}
+  cancel-in-progress: false
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    outputs:
+      artifact-id: ${{ steps.upload.outputs.artifact-id }}
+      archive-sha256: ${{ steps.binding.outputs.archive-sha256 }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Require approved public source and release tag
+        env:
+          RELEASE_MODE: ${{ inputs.mode }}
+          APPROVED_SHA: ${{ vars.REGISTRY_SECURITY_APPROVED_SHA }}
+          PUBLISH_ENABLED: ${{ vars.REGISTRY_PUBLISH_ENABLED }}
+          BOOTSTRAP_ENABLED: ${{ vars.REGISTRY_BOOTSTRAP_ENABLED }}
+        run: python3 .github/scripts/release-gate.py
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+        with:
+          node-version: '24.15.0'
+          package-manager-cache: false
+      - name: Install pinned managers, build and inspect without credentials
+        run: bash .github/scripts/prepare-npm-release.sh
+      - name: Bind archive to reviewed source
+        id: binding
+        run: node .github/scripts/release-archive.mjs prepare "$RUNNER_TEMP/package-release"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        id: upload
+        with:
+          name: npm-release-${{ github.sha }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/package-release/
+          if-no-files-found: error
+          retention-days: 7
+          overwrite: false
+  publish:
+    needs: prepare
+    if: inputs.mode != 'prepare' && vars.REGISTRY_PUBLISH_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: npm-public
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Recheck source, gates and registry state
+        env:
+          RELEASE_MODE: ${{ inputs.mode }}
+          APPROVED_SHA: ${{ vars.REGISTRY_SECURITY_APPROVED_SHA }}
+          PUBLISH_ENABLED: ${{ vars.REGISTRY_PUBLISH_ENABLED }}
+          BOOTSTRAP_ENABLED: ${{ vars.REGISTRY_BOOTSTRAP_ENABLED }}
+        run: python3 .github/scripts/release-gate.py
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+        with:
+          node-version: '24.15.0'
+          registry-url: https://registry.npmjs.org
+          package-manager-cache: false
+      - run: npm install --global npm@11.12.1
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          artifact-ids: ${{ needs.prepare.outputs.artifact-id }}
+          merge-multiple: true
+          path: ${{ runner.temp }}/package-release
+      - name: Verify prepared archive before authentication
+        env:
+          EXPECTED_ARCHIVE_SHA256: ${{ needs.prepare.outputs.archive-sha256 }}
+        run: node .github/scripts/release-archive.mjs verify "$RUNNER_TEMP/package-release"
+      - name: First publication with this repository's temporary token
+        if: inputs.mode == 'bootstrap'
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_BOOTSTRAP_TOKEN }}
+        run: |
+          test -n "$NODE_AUTH_TOKEN"
+          npm whoami --registry=https://registry.npmjs.org > /dev/null
+          node --input-type=module -e 'const r=await fetch("https://registry.npmjs.org/"+encodeURIComponent("@crowsi/provider-http-transport"),{headers:{authorization:"Bearer "+process.env.NODE_AUTH_TOKEN},redirect:"error"});if(r.status!==404)throw Error("Bootstrap requires an authenticated missing package; inspect existing visibility/ownership")'
+          npm publish "$RUNNER_TEMP/package-release/crowsi-provider-http-transport-0.10.0.tgz" --registry=https://registry.npmjs.org --access public --provenance --ignore-scripts
+      - name: Subsequent publication with repository OIDC identity
+        if: inputs.mode == 'oidc'
+        run: npm publish "$RUNNER_TEMP/package-release/crowsi-provider-http-transport-0.10.0.tgz" --registry=https://registry.npmjs.org --access public --provenance --ignore-scripts
