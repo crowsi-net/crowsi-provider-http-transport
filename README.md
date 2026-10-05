@@ -59,12 +59,14 @@ Runtime: Node.js22+. Release checks use Node.js24.15.0 and npm11.12.1.
 
 ```sh
 npm ci
+npm run check
 npm test
-npm run typecheck
 npm pack
 ```
 
-`prepack` runs tests and type validation. Verify the exact archive in a fresh consumer before publication.
+`src/*.mts` is the typed implementation. `dist/*.mjs` and declarations are generated together by `npm run build`; do not edit or commit them.
+`npm run check` verifies Biome format/lint, strict implementation and consumer types, and the user 120 physical-line limit. The internal rule is 149 non-empty/non-comment lines; this candidate enforces the stricter requested physical limit.
+`prepack` runs these checks, builds, and runs runtime tests. Verify the exact archive in a fresh consumer before publication.
 Synthetic fetch/stream cases and a loopback-only adapter cover failure paths; the adapter does not establish real TLS, browser cookie/CORS or customer-service compatibility.
 No real provider credentials or external mail APIs are used in tests.
 

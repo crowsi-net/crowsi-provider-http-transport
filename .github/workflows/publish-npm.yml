@@ -1,4 +1,4 @@
-name: Publish reviewed npm archive
+name: Stage reviewed npm archive
 on:
   workflow_dispatch:
     inputs:
@@ -75,7 +75,7 @@ jobs:
           node-version: '24.15.0'
           registry-url: https://registry.npmjs.org
           package-manager-cache: false
-      - run: npm install --global npm@11.12.1
+      - run: npm install --global npm@11.15.0
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
           artifact-ids: ${{ needs.prepare.outputs.artifact-id }}
@@ -85,7 +85,7 @@ jobs:
         env:
           EXPECTED_ARCHIVE_SHA256: ${{ needs.prepare.outputs.archive-sha256 }}
         run: node .github/scripts/release-archive.mjs verify "$RUNNER_TEMP/package-release"
-      - name: First publication with this repository's temporary token
+      - name: First staging with this repository's temporary token
         if: inputs.mode == 'bootstrap'
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_BOOTSTRAP_TOKEN }}
@@ -93,7 +93,22 @@ jobs:
           test -n "$NODE_AUTH_TOKEN"
           npm whoami --registry=https://registry.npmjs.org > /dev/null
           node --input-type=module -e 'const r=await fetch("https://registry.npmjs.org/"+encodeURIComponent("@crowsi/provider-http-transport"),{headers:{authorization:"Bearer "+process.env.NODE_AUTH_TOKEN},redirect:"error"});if(r.status!==404)throw Error("Bootstrap requires an authenticated missing package; inspect existing visibility/ownership")'
-          npm publish "$RUNNER_TEMP/package-release/crowsi-provider-http-transport-0.10.0.tgz" --registry=https://registry.npmjs.org --access public --provenance --ignore-scripts
-      - name: Subsequent publication with repository OIDC identity
+          set -o pipefail
+          npm stage publish "$RUNNER_TEMP/package-release/crowsi-provider-http-transport-0.10.0.tgz" --registry=https://registry.npmjs.org --access public --provenance --ignore-scripts | tee "$RUNNER_TEMP/npm-stage-result.txt"
+      - name: Subsequent staging with repository OIDC identity
         if: inputs.mode == 'oidc'
-        run: npm publish "$RUNNER_TEMP/package-release/crowsi-provider-http-transport-0.10.0.tgz" --registry=https://registry.npmjs.org --access public --provenance --ignore-scripts
+        run: |
+          set -o pipefail
+          npm stage publish "$RUNNER_TEMP/package-release/crowsi-provider-http-transport-0.10.0.tgz" --registry=https://registry.npmjs.org --access public --provenance --ignore-scripts | tee "$RUNNER_TEMP/npm-stage-result.txt"
+      - name: Record pending stage and reviewed distribution for owner approval
+        env:
+          REVIEWED_ARTIFACT_ID: ${{ needs.prepare.outputs.artifact-id }}
+        run: |
+          {
+            printf '%s\n' 'Staged only; not published. Owner: npmjs.com Staged Packages -> exact entry -> Approve with 2FA.' '```text'
+            cat "$RUNNER_TEMP/npm-stage-result.txt"
+            printf '%s\n' '```' 'Reviewed release (compare downloaded staged TGZ digest before approval):' '```json'
+            cat "$RUNNER_TEMP/package-release/release.json"
+            printf '%s\n' '```'
+            printf 'Run %s attempt %s; reviewed artifact %s\n' "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT" "$REVIEWED_ARTIFACT_ID"
+          } >> "$GITHUB_STEP_SUMMARY"

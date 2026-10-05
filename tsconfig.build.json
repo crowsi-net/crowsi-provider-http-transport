@@ -9,10 +9,12 @@
       "DOM.Iterable"
     ],
     "strict": true,
-    "noEmit": true
+    "rootDir": "src",
+    "outDir": "dist",
+    "declaration": true,
+    "noEmitOnError": true
   },
   "include": [
-    "src/**/*.mts",
-    "test/types.mts"
+    "src/**/*.mts"
   ]
 }
