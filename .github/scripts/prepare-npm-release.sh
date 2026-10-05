@@ -16,7 +16,7 @@ if test "$MANAGER" = pnpm@10.29.3; then
 else
   test "$MANAGER" = npm@11.12.1
   npm ci --ignore-scripts
-  npm pack --json --pack-destination "$RUNNER_TEMP/package-release" > "$RUNNER_TEMP/package-pack.json"
+  npm pack --json --foreground-scripts=false --pack-destination "$RUNNER_TEMP/package-release" > "$RUNNER_TEMP/package-pack.json"
 fi
 python3 .github/scripts/check-package.py "$RUNNER_TEMP/package-release/crowsi-provider-http-transport-0.10.0.tgz"
 node .github/scripts/package-consumer.mjs "$RUNNER_TEMP/package-release/crowsi-provider-http-transport-0.10.0.tgz"
