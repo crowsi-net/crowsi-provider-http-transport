@@ -1,8 +1,8 @@
-// Changed: stalled reads and cleanup cannot outlive the request abort.
 import { ProviderTransportError } from './policy.mjs'
 import { abortable, cancelBody } from './abort.mjs'
 
-export async function readBounded(response, maximumBytes, signal) {
+/** Drain bytes within the bound while preserving abort and releasing the reader lock. */
+export async function readBounded(response: Response, maximumBytes: number, signal: AbortSignal): Promise<Uint8Array> {
   const declared = response.headers.get('content-length')
   if (declared !== null && (!/^\d+$/u.test(declared) || Number(declared) > maximumBytes)) {
     cancelBody(response)
@@ -10,7 +10,7 @@ export async function readBounded(response, maximumBytes, signal) {
   }
   if (!response.body) return new Uint8Array()
   const reader = response.body.getReader()
-  const parts = []
+  const parts: Uint8Array[] = []
   let size = 0
   try {
     while (true) {
@@ -23,7 +23,11 @@ export async function readBounded(response, maximumBytes, signal) {
       parts.push(part.value)
     }
   } finally {
-    try { void reader.cancel().catch(() => {}) } catch {}
+    try {
+      void reader.cancel().catch(() => {})
+    } catch {
+      /* Reader cancellation is best effort. */
+    }
     reader.releaseLock()
   }
   const bytes = new Uint8Array(size)
@@ -34,4 +38,3 @@ export async function readBounded(response, maximumBytes, signal) {
   }
   return bytes
 }
-

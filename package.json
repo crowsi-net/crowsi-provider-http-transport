@@ -9,21 +9,27 @@
   },
   "exports": {
     ".": {
-      "types": "./src/index.d.mts",
-      "import": "./src/index.mjs"
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs"
     }
   },
   "files": [
-    "src",
+    "dist",
     "README.md",
     "SECURITY.md",
     "LICENSE",
     "NOTICE"
   ],
   "scripts": {
-    "test": "node --test test/*.test.mjs",
+    "format": "biome format --write src test scripts .github/scripts/*.mjs",
+    "format:check": "biome format src test scripts .github/scripts/*.mjs",
+    "lint": "biome lint --error-on-warnings src test scripts .github/scripts/*.mjs",
     "typecheck": "tsc -p tsconfig.json",
-    "prepack": "npm test && npm run typecheck"
+    "build": "node scripts/clean-dist.mjs && tsc -p tsconfig.build.json",
+    "test": "npm run build && node --test test/*.test.mjs",
+    "check:lines": "node scripts/check-lines.mjs",
+    "check": "npm run format:check && npm run lint && npm run typecheck && npm run check:lines",
+    "prepack": "npm run check && npm test"
   },
   "repository": {
     "type": "git",
@@ -40,6 +46,7 @@
     "provenance": true
   },
   "devDependencies": {
-    "typescript": "5.9.3"
+    "typescript": "5.9.3",
+    "@biomejs/biome": "2.5.15"
   }
 }

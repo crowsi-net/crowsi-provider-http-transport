@@ -1,3 +1,4 @@
+/** Caller-owned destination, method, headers and body. Runtime rejects unmeasurable bodies. */
 export interface ProviderHttpRequest {
   url: string | URL
   method?: 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE'
@@ -6,6 +7,7 @@ export interface ProviderHttpRequest {
   signal?: AbortSignal
 }
 
+/** Bounded response bytes; callers interpret HTTP status codes. */
 export interface ProviderHttpResponse {
   status: number
   statusText: string
@@ -13,6 +15,7 @@ export interface ProviderHttpResponse {
   body: Uint8Array
 }
 
+/** Exact HTTPS origins and finite byte/time limits; injected fetch remains trusted. */
 export interface ProviderHttpTransportOptions {
   allowedOrigins: string[]
   maximumRequestBytes?: number
@@ -21,11 +24,7 @@ export interface ProviderHttpTransportOptions {
   fetchImplementation?: typeof fetch
 }
 
-export class ProviderTransportError extends Error {
-  readonly code: string
-  constructor(code: string, cause?: unknown)
-}
-
-export function createProviderHttpTransport(options: ProviderHttpTransportOptions): {
+/** Transport does not generate, persist or log authentication headers. */
+export interface ProviderHttpTransport {
   request(request: ProviderHttpRequest): Promise<ProviderHttpResponse>
 }
