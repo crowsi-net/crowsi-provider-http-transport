@@ -28,9 +28,9 @@ jobs:
           mkdir -p "$RUNNER_TEMP/http-transport-package"
           npm pack --json --pack-destination "$RUNNER_TEMP/http-transport-package"
       - name: Check the actual distribution archive
-        run: python3 .github/scripts/check-package.py "$RUNNER_TEMP/http-transport-package/crowsi-provider-http-transport-0.10.0.tgz"
+        run: python3 .github/scripts/check-package.py "$RUNNER_TEMP/http-transport-package/crowsi-provider-http-transport-0.10.1.tgz"
       - name: Verify a fresh archive consumer
-        run: node .github/scripts/package-consumer.mjs "$RUNNER_TEMP/http-transport-package/crowsi-provider-http-transport-0.10.0.tgz"
+        run: node .github/scripts/package-consumer.mjs "$RUNNER_TEMP/http-transport-package/crowsi-provider-http-transport-0.10.1.tgz"
   test:
     needs: verify
     if: ${{ always() }}

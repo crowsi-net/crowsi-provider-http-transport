@@ -5,8 +5,8 @@ import { execFileSync } from 'node:child_process'
 const [mode, directory] = process.argv.slice(2)
 const sha = process.env.GITHUB_SHA
 const name = '@crowsi/provider-http-transport',
-  version = '0.10.0',
-  filename = 'crowsi-provider-http-transport-0.10.0.tgz'
+  version = '0.10.1',
+  filename = 'crowsi-provider-http-transport-0.10.1.tgz'
 if (!lstatSync(join(directory, filename)).isFile()) throw Error('Regular archive required')
 if (!/^[a-f0-9]{40}$/.test(sha ?? '') || process.env.GITHUB_REPOSITORY !== 'crowsi-net/crowsi-provider-http-transport')
   throw Error('Exact approved public source required')
